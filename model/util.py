@@ -49,10 +49,7 @@ def bbox_iou(box1, box2):
 
 
 def predict_transform(prediction, inp_dim, anchors, num_classes, CUDA=True):
-    """
 
-    """
-    # pylint: disable-msg=too-many-locals
     batch_size = prediction.size(0)
     stride = inp_dim // prediction.size(2)
     grid_size = inp_dim // stride
@@ -66,9 +63,9 @@ def predict_transform(prediction, inp_dim, anchors, num_classes, CUDA=True):
     prediction = prediction.view(
         batch_size, grid_size * grid_size * num_anchors, bbox_attrs
     )
-
     anchors = [(a[0] / stride, a[1] / stride) for a in anchors]
 
+    # Sigmoid the  centre_X, centre_Y. and object confidencce
     prediction[:, :, 0] = torch.sigmoid(prediction[:, :, 0])
     prediction[:, :, 1] = torch.sigmoid(prediction[:, :, 1])
     prediction[:, :, 4] = torch.sigmoid(prediction[:, :, 4])
@@ -127,7 +124,9 @@ def write_results(prediction, confidence, num_classes, nms_conf=0.4):
     write = False
 
     for ind in range(batch_size):
-        image_pred = prediction[ind]
+        image_pred = prediction[ind]  # image Tensor
+        # confidence threshholding
+        # NMS
 
         max_conf, max_conf_score = torch.max(image_pred[:, 5 : 5 + num_classes], 1)
         max_conf = max_conf.float().unsqueeze(1)
@@ -167,7 +166,7 @@ def write_results(prediction, confidence, num_classes, nms_conf=0.4):
                 # in the loop
                 try:
                     ious = bbox_iou(
-                        image_pred_class[i].unsqueeze(0), image_pred_class[i + 1:]
+                        image_pred_class[i].unsqueeze(0), image_pred_class[i + 1 :]
                     )
                 except ValueError:
                     break
@@ -222,9 +221,9 @@ def letterbox_image(img, inp_dim):
 
 def prep_image(img, inp_dim):
     """
-    Prepare image for inputting to the neural network.
-
-    Returns a variable indicating the image.
+    Prepare image for inputting to the neural network. 
+    
+    Returns a Variable 
     """
     img = letterbox_image(img, (inp_dim, inp_dim))
     img = img[:, :, ::-1].transpose((2, 0, 1)).copy()
